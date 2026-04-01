@@ -1,3 +1,10 @@
+/**
+ * LibTermux-Android — Core Module Build Script
+ * Copyright (c) 2026 AeonCoreX-Lab / cybernahid-dev.
+ *
+ * Licensed under the Apache License, Version 2.0
+ */
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
 import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
@@ -9,28 +16,28 @@ plugins {
 }
 
 android {
-    namespace = "com.libtermux"
+    namespace  = "com.libtermux"
     compileSdk = 34
 
     defaultConfig {
         minSdk = 24
         consumerProguardFiles("consumer-rules.pro")
-        
+
         externalNativeBuild {
             cmake {
-                cppFlags += "-std=c++17"
+                cppFlags  += "-std=c++17"
                 arguments("-DANDROID_STL=c++_shared")
             }
         }
-        
+
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64", "armeabi-v7a", "x86")
         }
     }
-    
+
     externalNativeBuild {
         cmake {
-            path = file("src/main/jni/CMakeLists.txt")
+            path    = file("src/main/jni/CMakeLists.txt")
             version = "3.22.1"
         }
     }
@@ -38,13 +45,16 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
         debug {
             isJniDebuggable = true
         }
     }
-    
+
     buildFeatures {
         buildConfig = true
     }
@@ -61,17 +71,19 @@ android {
             "-opt-in=kotlinx.coroutines.FlowPreview",
         )
     }
-    
+
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
-    
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-            withJavadocJar()
-        }
-    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // NOTE: Do NOT add android { publishing { singleVariant(...) } } here.
+    //
+    // The vanniktech maven-publish plugin (configured in mavenPublishing {}
+    // below) calls singleVariant("release") internally via
+    // AndroidSingleVariantLibrary. Adding it here too causes:
+    //   "Using singleVariant publishing DSL multiple times … is not allowed."
+    // ─────────────────────────────────────────────────────────────────────
 }
 
 dependencies {
@@ -82,21 +94,34 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
-    
+
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
 }
 
+// ── Maven Publishing (vanniktech plugin handles singleVariant internally) ──
 mavenPublishing {
+    // AndroidSingleVariantLibrary publishes the "release" variant,
+    // with sources and Javadoc JARs — no manual singleVariant() call needed.
+    configure(
+        AndroidSingleVariantLibrary(
+            variant            = "release",
+            sourcesJar         = true,
+            publishJavadocJar  = true,
+        )
+    )
+
     publishToMavenCentral(SonatypeHost.S01)
     signAllPublications()
+
     coordinates(
-        groupId = project.property("LIB_GROUP_ID").toString(),
+        groupId    = project.property("LIB_GROUP_ID").toString(),
         artifactId = project.property("LIB_ARTIFACT_ID").toString(),
-        version = project.property("LIB_VERSION").toString(),
+        version    = project.property("LIB_VERSION").toString(),
     )
+
     pom {
         name.set(project.property("LIB_NAME").toString())
         description.set(project.property("LIB_DESCRIPTION").toString())

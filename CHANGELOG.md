@@ -2,7 +2,7 @@
 
 All notable changes to LibTermux Android will be documented here.
 
-## [1.0.0] - 2024-01-01
+## [1.0.0] - 2026-04-01
 
 ### Added
 - `LibTermux` singleton entry-point with Kotlin DSL config (`termuxConfig {}`)

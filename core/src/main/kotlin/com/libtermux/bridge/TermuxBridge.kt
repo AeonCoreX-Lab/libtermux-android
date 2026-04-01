@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.jsonObject
 import java.io.File
 
 /**
@@ -39,13 +38,13 @@ import java.io.File
  * val result = bridge.run("echo Hello World")
  * val json   = bridge.runJson("python3 -c 'import json; print(json.dumps({\"x\":1}))'")
  * bridge.python("""
- *     import math
- *     print(math.sqrt(144))
+ * import math
+ * print(math.sqrt(144))
  * """)
  * ```
  */
 class TermuxBridge internal constructor(
-    private val executor: CommandExecutor,
+    @PublishedApi internal val executor: CommandExecutor, // <-- FIXED HERE
     private val pkgManager: PackageManager,
     val vfs: VirtualFileSystem,
 ) {

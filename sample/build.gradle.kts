@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.libtermux.sample"
-        minSdk        = 24
+        minSdk        = 26
         targetSdk     = 34
         versionCode   = 1
         versionName   = "1.0.0"
@@ -37,9 +37,16 @@ android {
 dependencies {
     implementation(project(":core"))
     implementation(project(":terminal-view"))
+    
+    // UI Dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.material)
-    implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.material) // FIXED: Uses material directly, not androidx.material
+    implementation(libs.androidx.constraintlayout) // ADDED: Usually required for ActivityMainBinding
+    
+    // Lifecycle & Coroutines
+    implementation(libs.androidx.lifecycle.runtime.ktx) // FIXED: Added .ktx for lifecycleScope
+    implementation(libs.androidx.lifecycle.viewmodel.ktx) // ADDED: Required for viewModels() delegate
+    implementation(libs.androidx.activity.ktx) // ADDED: Required for viewModels() delegate
     implementation(libs.kotlinx.coroutines.android)
 }

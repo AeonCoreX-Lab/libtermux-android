@@ -14,4 +14,7 @@
     <color name="catppuccin_red">#F38BA8</color>
     <color name="catppuccin_yellow">#F9E2AF</color>
     <color name="catppuccin_teal">#94E2D5</color>
+
+    <!-- Adaptive icon background -->
+    <color name="ic_launcher_background">#1E1E2E</color>
 </resources>

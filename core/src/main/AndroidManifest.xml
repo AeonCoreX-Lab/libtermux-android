@@ -12,6 +12,17 @@
             android:name="com.libtermux.service.TermuxBackgroundService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
+        <!-- AndroidX Startup Initializer declaration -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="com.libtermux.initializer.LibTermuxInitializer"
+                android:value="androidx.startup" />
+        </provider>
     </application>
 
 </manifest>

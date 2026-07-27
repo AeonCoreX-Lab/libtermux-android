@@ -1,6 +1,6 @@
 [versions]
-agp                  = "8.3.2"
-kotlin               = "1.9.23"
+agp                  = "9.2.1"
+kotlin               = "2.4.0"
 coroutines           = "1.8.0"
 okhttp               = "4.12.0"
 workManager          = "2.9.0"
@@ -19,8 +19,6 @@ constraintlayout     = "2.1.4"
 activity             = "1.9.3"
 
 # ── OS Module additions ──────────────────────────────────────────────────────
-# Compose Compiler 1.5.12 is compatible with Kotlin 1.9.23
-composeCompiler      = "1.5.12"
 composeBom           = "2024.05.00"
 activityCompose      = "1.9.3"
 datastorePreferences = "1.1.1"
@@ -75,7 +73,9 @@ material         = { module = "com.google.android.material:material", version.re
 [plugins]
 android-application  = { id = "com.android.application",                         version.ref = "agp"          }
 android-library      = { id = "com.android.library",                             version.ref = "agp"          }
-kotlin-android       = { id = "org.jetbrains.kotlin.android",                    version.ref = "kotlin"       }
+# NOTE: kotlin.android plugin removed — AGP 9.0+ has Kotlin built in, and
+# applying org.jetbrains.kotlin.android alongside it is no longer supported.
+kotlin-compose       = { id = "org.jetbrains.kotlin.plugin.compose",             version.ref = "kotlin"       }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization",       version.ref = "kotlin"       }
 dokka                = { id = "org.jetbrains.dokka",                             version.ref = "dokka"        }
 maven-publish        = { id = "com.vanniktech.maven.publish",                    version.ref = "mavenPublish" }

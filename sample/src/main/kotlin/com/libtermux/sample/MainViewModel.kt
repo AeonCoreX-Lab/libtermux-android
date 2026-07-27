@@ -75,7 +75,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     // ── Commands ─────────────────────────────────────────────────────────
 
     fun runCommand(command: String) {
-        if (!termux.isInitialized) {
+        if (!termux.isInstalled) {
             emit(UiEvent.Toast("Please install bootstrap first"))
             return
         }
@@ -89,7 +89,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun runPythonDemo() {
-        if (!termux.isInitialized) { emit(UiEvent.Toast("Install bootstrap first")); return }
+        if (!termux.isInstalled) { emit(UiEvent.Toast("Install bootstrap first")); return }
         viewModelScope.launch {
             emit(UiEvent.Output("$ python3 [demo script]"))
             val result = termux.bridge.python("""
@@ -108,7 +108,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun runSysInfo() {
-        if (!termux.isInitialized) { emit(UiEvent.Toast("Install bootstrap first")); return }
+        if (!termux.isInstalled) { emit(UiEvent.Toast("Install bootstrap first")); return }
         viewModelScope.launch {
             emit(UiEvent.Output("--- System Information ---"))
             // Use raw string to avoid escape issues with $PREFIX

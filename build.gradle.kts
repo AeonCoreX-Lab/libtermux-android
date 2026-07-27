@@ -7,7 +7,9 @@
 plugins {
     alias(libs.plugins.android.application)  apply false
     alias(libs.plugins.android.library)      apply false
-    alias(libs.plugins.kotlin.android)       apply false
+    // AGP 9.0+ has built-in Kotlin — org.jetbrains.kotlin.android must NOT
+    // be applied anywhere in this project anymore.
+    alias(libs.plugins.kotlin.compose)       apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.dokka)                apply false
     alias(libs.plugins.maven.publish)        apply false

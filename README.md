@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-Android%2024%2B-green?style=flat-square&logo=android" />
+  <img src="https://img.shields.io/badge/Platform-Android%2026%2B-green?style=flat-square&logo=android" />
   <img src="https://img.shields.io/badge/Language-Kotlin-blue?style=flat-square&logo=kotlin" />
   <img src="https://img.shields.io/badge/Architecture-arm64%20%7C%20x86__64%20%7C%20arm%20%7C%20x86-orange?style=flat-square" />
   <img src="https://img.shields.io/badge/License-Apache%202.0-lightgrey?style=flat-square" />
@@ -20,6 +20,10 @@ Linux terminal without ever knowing it exists.
 
 ```
 Your App → LibTermux SDK → Isolated Linux Env → bash, python, node, ruby, pkg install...
+```
+
+```
+⚠️ Note: This project is currently experimental may have bugs and not usable in production currently. But we are actively working on it to make it production grade
 ```
 
 ## ✨ Features

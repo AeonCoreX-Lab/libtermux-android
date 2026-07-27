@@ -22,7 +22,7 @@ Linux terminal without ever knowing it exists.
 Your App → LibTermux SDK → Isolated Linux Env → bash, python, node, ruby, pkg install...
 ```
 
-> **⚠️ Note: This project is currently in experimental stage may have bugs and not usable in production currently. But we are actively working on it to make it production grade.**
+> **⚠️ Note: This project is currently in experimental stage may have bugs and not usable in production at that moment. But we are actively working on it to make it production grade.**
 
 ## ✨ Features
 

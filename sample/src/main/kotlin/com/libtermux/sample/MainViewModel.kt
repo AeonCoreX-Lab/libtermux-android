@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.libtermux.LibTermux
-import com.libtermux.LibTermuxState
 import com.libtermux.bootstrap.InstallState
 import com.libtermux.executor.ExecutionResult
 import com.libtermux.termuxConfig
@@ -26,12 +25,12 @@ sealed class UiEvent {
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val termux = LibTermux.create(app) {
+    private val termux = LibTermux.init(app, termuxConfig {
         autoInstall    = true
         logLevel       = com.libtermux.LogLevel.DEBUG
         backgroundExecutionEnabled = true
         env("COLORTERM", "truecolor")
-    }
+    })
 
     private val _uiState  = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -43,7 +42,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun install(forceReinstall: Boolean = false) {
         viewModelScope.launch {
-            termux.initialize(forceReinstall).collect { state ->
+            termux.install(forceReinstall).collect { state ->
                 when (state) {
                     is InstallState.Checking          -> updateStatus("Checking...", true)
                     is InstallState.AlreadyInstalled  -> {
@@ -136,7 +135,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     override fun onCleared() {
-        termux.destroy()
+        termux.release()
         super.onCleared()
     }
 }

@@ -205,12 +205,12 @@ class ShizukuTermux private constructor(
 
     // ── Lifecycle delegation ──────────────────────────────────────────────
 
-    /** Initialize LibTermux bootstrap (delegates to [LibTermux.initialize]) */
+    /** Initialize LibTermux bootstrap (delegates to [LibTermux.install]) */
     fun initialize(forceReinstall: Boolean = false): Flow<InstallState> =
-        libTermux.initialize(forceReinstall)
+        libTermux.install(forceReinstall)
 
     /** Destroy the instance and release resources */
-    fun destroy() = libTermux.destroy()
+    fun destroy() = libTermux.release()
 
     // ── Singleton ─────────────────────────────────────────────────────────
 

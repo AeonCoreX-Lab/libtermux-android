@@ -49,11 +49,11 @@ class LibTermux private constructor(
     }
 
     val packageManager: PackageManager by lazy {
-        PackageManager(executor, vfs)
+        PackageManager(executor)
     }
 
     val installer: BootstrapInstaller by lazy {
-        BootstrapInstaller(context, config, vfs, executor)
+        BootstrapInstaller(context, config, vfs)
     }
 
     /**
@@ -68,6 +68,17 @@ class LibTermux private constructor(
 
     /** Whether the device is rooted (su available and functional) */
     val isRooted: Boolean get() = RootUtils.isRooted
+
+    /**
+     * Throws if the bootstrap hasn't been installed yet.
+     * Used by [com.libtermux.utils.withBridge] to fail fast before
+     * running commands against an uninitialized environment.
+     */
+    fun ensureReady() {
+        check(isInstalled) {
+            "LibTermux bootstrap is not installed. Call install() and collect it to completion first."
+        }
+    }
 
     /** Release resources. Call from onDestroy if needed. */
     fun release() {

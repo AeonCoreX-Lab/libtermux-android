@@ -192,19 +192,27 @@ abstract class FetchBootstrapBinariesTask : DefaultTask() {
     }
 
     /**
-     * Find [name] under PREFIX/bin, following one level of symlink
-     * resolution if it's listed in SYMLINKS.txt. Termux symlinks are not
-     * chained more than one level in practice (applet -> busybox), but this
-     * follows up to a few hops defensively.
+     * Find [name] under PREFIX/bin, following symlink resolution if it's
+     * listed in SYMLINKS.txt. Termux symlinks are not chained more than one
+     * level in practice (applet -> busybox), but this follows up to a few
+     * hops defensively.
+     *
+     * ## Zip layout
+     * `create_bootstrap_archive()` in termux-packages `cd`s into
+     * `$PREFIX` (i.e. `.../usr`) *before* zipping — see
+     * termux-packages/scripts/generate-bootstraps.sh. So zip entries and
+     * SYMLINKS.txt paths are relative to `$PREFIX` itself: `bin/bash`,
+     * `SYMLINKS.txt` at the zip root — there is no leading `usr/` inside
+     * the archive (unlike the on-device install path
+     * `$HOME/../usr/bin/bash`, which is a different, later concept).
      */
     private fun locateBinary(scratchDir: File, name: String, symlinks: Map<String, String>): File? {
-        val prefixBin = "usr/bin"
-        var relPath = "$prefixBin/$name"
+        var relPath = "bin/$name"
         var direct = File(scratchDir, relPath)
         var hops = 0
         while (!direct.exists() && hops < 5) {
-            val linked = symlinks[relPath] ?: symlinks["bin/$name"] ?: return null
-            relPath = if (linked.startsWith("usr/")) linked else "$prefixBin/${linked.removePrefix("bin/")}"
+            val linked = symlinks[relPath] ?: return null
+            relPath = linked.removePrefix("./")
             direct = File(scratchDir, relPath)
             hops++
         }

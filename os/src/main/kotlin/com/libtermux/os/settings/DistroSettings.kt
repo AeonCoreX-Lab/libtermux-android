@@ -41,23 +41,23 @@ class DistroSettingsStore(private val context: Context) {
             val prefix = distro.id
             DistroRuntimeSettings(
                 distroId      = distro.id,
-                displayWidth  = prefs[intKey("${prefix}_width")]
+                displayWidth  = prefs[intPreferencesKey("${prefix}_width")]
                                     ?: default?.effectiveWidth ?: 1280,
-                displayHeight = prefs[intKey("${prefix}_height")]
+                displayHeight = prefs[intPreferencesKey("${prefix}_height")]
                                     ?: default?.effectiveHeight ?: 720,
-                colorDepth    = prefs[intKey("${prefix}_depth")]
+                colorDepth    = prefs[intPreferencesKey("${prefix}_depth")]
                                     ?: default?.colorDepth ?: 24,
-                vncPort       = prefs[intKey("${prefix}_vncPort")]
+                vncPort       = prefs[intPreferencesKey("${prefix}_vncPort")]
                                     ?: default?.vncPort ?: 5901,
-                vncPassword   = prefs[stringKey("${prefix}_vncPass")]
+                vncPassword   = prefs[stringPreferencesKey("${prefix}_vncPass")]
                                     ?: default?.vncPassword ?: "",
-                startupCmds   = prefs[stringKey("${prefix}_startupCmds")]
+                startupCmds   = prefs[stringPreferencesKey("${prefix}_startupCmds")]
                                     ?.split(";;")
                                     ?.filter { it.isNotBlank() }
                                     ?: default?.startupCommands ?: emptyList(),
-                showToolbar   = prefs[booleanKey("${prefix}_toolbar")] ?: true,
-                scaleToFit    = prefs[booleanKey("${prefix}_scale")] ?: true,
-                vibrateMouse  = prefs[booleanKey("${prefix}_vibrate")] ?: false,
+                showToolbar   = prefs[booleanPreferencesKey("${prefix}_toolbar")] ?: true,
+                scaleToFit    = prefs[booleanPreferencesKey("${prefix}_scale")] ?: true,
+                vibrateMouse  = prefs[booleanPreferencesKey("${prefix}_vibrate")] ?: false,
             )
         }
 
@@ -71,22 +71,22 @@ class DistroSettingsStore(private val context: Context) {
         context.distroDataStore.edit { prefs ->
             val prefix = distro.id
             current = current.copy(
-                displayWidth  = prefs[intKey("${prefix}_width")]     ?: current.displayWidth,
-                displayHeight = prefs[intKey("${prefix}_height")]    ?: current.displayHeight,
-                colorDepth    = prefs[intKey("${prefix}_depth")]     ?: current.colorDepth,
-                vncPort       = prefs[intKey("${prefix}_vncPort")]   ?: current.vncPort,
-                vncPassword   = prefs[stringKey("${prefix}_vncPass")]?: current.vncPassword,
+                displayWidth  = prefs[intPreferencesKey("${prefix}_width")]     ?: current.displayWidth,
+                displayHeight = prefs[intPreferencesKey("${prefix}_height")]    ?: current.displayHeight,
+                colorDepth    = prefs[intPreferencesKey("${prefix}_depth")]     ?: current.colorDepth,
+                vncPort       = prefs[intPreferencesKey("${prefix}_vncPort")]   ?: current.vncPort,
+                vncPassword   = prefs[stringPreferencesKey("${prefix}_vncPass")]?: current.vncPassword,
             )
             val updated = transform(current)
-            prefs[intKey("${prefix}_width")]          = updated.displayWidth
-            prefs[intKey("${prefix}_height")]         = updated.displayHeight
-            prefs[intKey("${prefix}_depth")]          = updated.colorDepth
-            prefs[intKey("${prefix}_vncPort")]        = updated.vncPort
-            prefs[stringKey("${prefix}_vncPass")]     = updated.vncPassword
-            prefs[stringKey("${prefix}_startupCmds")] = updated.startupCmds.joinToString(";;")
-            prefs[booleanKey("${prefix}_toolbar")]    = updated.showToolbar
-            prefs[booleanKey("${prefix}_scale")]      = updated.scaleToFit
-            prefs[booleanKey("${prefix}_vibrate")]    = updated.vibrateMouse
+            prefs[intPreferencesKey("${prefix}_width")]          = updated.displayWidth
+            prefs[intPreferencesKey("${prefix}_height")]         = updated.displayHeight
+            prefs[intPreferencesKey("${prefix}_depth")]          = updated.colorDepth
+            prefs[intPreferencesKey("${prefix}_vncPort")]        = updated.vncPort
+            prefs[stringPreferencesKey("${prefix}_vncPass")]     = updated.vncPassword
+            prefs[stringPreferencesKey("${prefix}_startupCmds")] = updated.startupCmds.joinToString(";;")
+            prefs[booleanPreferencesKey("${prefix}_toolbar")]    = updated.showToolbar
+            prefs[booleanPreferencesKey("${prefix}_scale")]      = updated.scaleToFit
+            prefs[booleanPreferencesKey("${prefix}_vibrate")]    = updated.vibrateMouse
         }
     }
 
@@ -94,15 +94,15 @@ class DistroSettingsStore(private val context: Context) {
     suspend fun reset(distro: Distro) {
         val prefix = distro.id
         context.distroDataStore.edit { prefs ->
-            prefs.remove(intKey("${prefix}_width"))
-            prefs.remove(intKey("${prefix}_height"))
-            prefs.remove(intKey("${prefix}_depth"))
-            prefs.remove(intKey("${prefix}_vncPort"))
-            prefs.remove(stringKey("${prefix}_vncPass"))
-            prefs.remove(stringKey("${prefix}_startupCmds"))
-            prefs.remove(booleanKey("${prefix}_toolbar"))
-            prefs.remove(booleanKey("${prefix}_scale"))
-            prefs.remove(booleanKey("${prefix}_vibrate"))
+            prefs.remove(intPreferencesKey("${prefix}_width"))
+            prefs.remove(intPreferencesKey("${prefix}_height"))
+            prefs.remove(intPreferencesKey("${prefix}_depth"))
+            prefs.remove(intPreferencesKey("${prefix}_vncPort"))
+            prefs.remove(stringPreferencesKey("${prefix}_vncPass"))
+            prefs.remove(stringPreferencesKey("${prefix}_startupCmds"))
+            prefs.remove(booleanPreferencesKey("${prefix}_toolbar"))
+            prefs.remove(booleanPreferencesKey("${prefix}_scale"))
+            prefs.remove(booleanPreferencesKey("${prefix}_vibrate"))
         }
     }
 }

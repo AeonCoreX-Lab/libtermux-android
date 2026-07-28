@@ -66,6 +66,7 @@ class BootstrapFetchPlugin : Plugin<Project> {
             bootstrapTag.set(ext.bootstrapTag)
             binaries.set(ext.binaries)
             outputDir.set(project.layout.projectDirectory.dir("src/main/jniLibs"))
+            gradleUserHomeDir.set(project.layout.dir(project.provider { project.gradle.gradleUserHomeDir }))
         }
     }
 }
@@ -106,6 +107,14 @@ abstract class FetchBootstrapBinariesTask : DefaultTask() {
     @get:Input abstract val binaries: org.gradle.api.provider.SetProperty<String>
     @get:OutputDirectory abstract val outputDir: DirectoryProperty
 
+    /**
+     * Gradle user home dir, used only to locate the shared bootstrap-zip
+     * cache. Captured at configuration time (see [BootstrapFetchPlugin])
+     * because `Task.project` cannot be touched during task execution under
+     * the configuration cache.
+     */
+    @get:org.gradle.api.tasks.Internal abstract val gradleUserHomeDir: DirectoryProperty
+
     @TaskAction
     fun fetch() {
         val abiName = abi.get()
@@ -114,7 +123,7 @@ abstract class FetchBootstrapBinariesTask : DefaultTask() {
         val wanted = binaries.get()
         val destDir = outputDir.get().dir(abiName).asFile.also { it.mkdirs() }
 
-        val cacheDir = File(project.gradle.gradleUserHomeDir, "libtermux-bootstrap-cache")
+        val cacheDir = File(gradleUserHomeDir.get().asFile, "libtermux-bootstrap-cache")
         cacheDir.mkdirs()
         val cachedZip = File(cacheDir, "bootstrap-$arch-$tag.zip")
 

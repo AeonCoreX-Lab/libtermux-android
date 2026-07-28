@@ -66,7 +66,6 @@ class BootstrapFetchPlugin : Plugin<Project> {
             bootstrapTag.set(ext.bootstrapTag)
             binaries.set(ext.binaries)
             outputDir.set(project.layout.projectDirectory.dir("src/main/jniLibs"))
-            gradleUserHomeDir.set(project.layout.dir(project.provider { project.gradle.gradleUserHomeDir }))
         }
     }
 }
@@ -107,14 +106,6 @@ abstract class FetchBootstrapBinariesTask : DefaultTask() {
     @get:Input abstract val binaries: org.gradle.api.provider.SetProperty<String>
     @get:OutputDirectory abstract val outputDir: DirectoryProperty
 
-    /**
-     * Gradle user home dir, used only to locate the shared bootstrap-zip
-     * cache. Captured at configuration time (see [BootstrapFetchPlugin])
-     * because `Task.project` cannot be touched during task execution under
-     * the configuration cache.
-     */
-    @get:org.gradle.api.tasks.Internal abstract val gradleUserHomeDir: DirectoryProperty
-
     @TaskAction
     fun fetch() {
         val abiName = abi.get()
@@ -123,7 +114,7 @@ abstract class FetchBootstrapBinariesTask : DefaultTask() {
         val wanted = binaries.get()
         val destDir = outputDir.get().dir(abiName).asFile.also { it.mkdirs() }
 
-        val cacheDir = File(gradleUserHomeDir.get().asFile, "libtermux-bootstrap-cache")
+        val cacheDir = File(project.gradle.gradleUserHomeDir, "libtermux-bootstrap-cache")
         cacheDir.mkdirs()
         val cachedZip = File(cacheDir, "bootstrap-$arch-$tag.zip")
 
@@ -192,27 +183,19 @@ abstract class FetchBootstrapBinariesTask : DefaultTask() {
     }
 
     /**
-     * Find [name] under PREFIX/bin, following symlink resolution if it's
-     * listed in SYMLINKS.txt. Termux symlinks are not chained more than one
-     * level in practice (applet -> busybox), but this follows up to a few
-     * hops defensively.
-     *
-     * ## Zip layout
-     * `create_bootstrap_archive()` in termux-packages `cd`s into
-     * `$PREFIX` (i.e. `.../usr`) *before* zipping — see
-     * termux-packages/scripts/generate-bootstraps.sh. So zip entries and
-     * SYMLINKS.txt paths are relative to `$PREFIX` itself: `bin/bash`,
-     * `SYMLINKS.txt` at the zip root — there is no leading `usr/` inside
-     * the archive (unlike the on-device install path
-     * `$HOME/../usr/bin/bash`, which is a different, later concept).
+     * Find [name] under PREFIX/bin, following one level of symlink
+     * resolution if it's listed in SYMLINKS.txt. Termux symlinks are not
+     * chained more than one level in practice (applet -> busybox), but this
+     * follows up to a few hops defensively.
      */
     private fun locateBinary(scratchDir: File, name: String, symlinks: Map<String, String>): File? {
-        var relPath = "bin/$name"
+        val prefixBin = "usr/bin"
+        var relPath = "$prefixBin/$name"
         var direct = File(scratchDir, relPath)
         var hops = 0
         while (!direct.exists() && hops < 5) {
-            val linked = symlinks[relPath] ?: return null
-            relPath = linked.removePrefix("./")
+            val linked = symlinks[relPath] ?: symlinks["bin/$name"] ?: return null
+            relPath = if (linked.startsWith("usr/")) linked else "$prefixBin/${linked.removePrefix("bin/")}"
             direct = File(scratchDir, relPath)
             hops++
         }

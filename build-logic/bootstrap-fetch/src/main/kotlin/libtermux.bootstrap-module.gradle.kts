@@ -8,7 +8,7 @@
  * bootstrapFetch { } values — everything else (AGP config, publishing,
  * wireBinariesToBuild) lives here exactly once.
  */
-import com.android.build.gradle.LibraryExtension
+import com.android.build.api.dsl.LibraryExtension
 import org.gradle.kotlin.dsl.configure
 
 plugins {

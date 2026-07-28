@@ -41,6 +41,11 @@ android {
 dependencies {
     implementation(project(":core"))
     implementation(project(":terminal-view"))
+    // Demonstrates the install-time-executable fix — without this, bash
+    // exec fails with EACCES on Android 10+. See NativeLibBootstrapProvider
+    // usage in MainViewModel.kt. Real apps should add every ABI they ship
+    // for (bootstrap-arm, bootstrap-x86_64, bootstrap-x86 alongside this).
+    implementation(project(":bootstrap-arm64"))
     
     // UI Dependencies
     implementation(libs.androidx.core.ktx)

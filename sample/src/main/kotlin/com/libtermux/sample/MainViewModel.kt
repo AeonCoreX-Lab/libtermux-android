@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.libtermux.LibTermux
 import com.libtermux.bootstrap.InstallState
+import com.libtermux.bootstrap.NativeLibBootstrapProvider
 import com.libtermux.executor.ExecutionResult
 import com.libtermux.termuxConfig
 import kotlinx.coroutines.flow.*
@@ -29,6 +30,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         autoInstall    = true
         logLevel       = com.libtermux.LogLevel.DEBUG
         backgroundExecutionEnabled = true
+        // Fixes the EACCES/"error=13, Permission denied" crash on Android
+        // 10+ (API 29+): binaries bundled by the bootstrap-arm64 module
+        // (added in sample/build.gradle.kts) live under nativeLibraryDir,
+        // extracted by PackageManager at install time with execute
+        // permission intact — unlike the old download-to-filesDir path.
+        bootstrapProvider = NativeLibBootstrapProvider.from(app)
         env("COLORTERM", "truecolor")
     })
 

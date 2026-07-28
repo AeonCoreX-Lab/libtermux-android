@@ -173,6 +173,29 @@ class CommandExecutor(
         return result.isSuccess && result.stdout.isNotBlank()
     }
 
+    /**
+     * Resolve a bootstrap binary name (e.g. "bash", "proot", "tar") to its
+     * executable [File] path, using the same resolution order as command
+     * execution: [TermuxConfig.bootstrapProvider] first, legacy
+     * `vfs.binDir` fallback otherwise.
+     *
+     * Other modules (e.g. `:os`'s ProotRunner, which needs `proot` and
+     * `tar` directly rather than through [execute]) should call this
+     * instead of touching `vfs.binDir` themselves, so there is exactly one
+     * place that understands binary resolution.
+     */
+    fun resolveBinary(name: String): File {
+        val provider = config.bootstrapProvider
+        if (provider != null) return provider.binaryPath(name)
+        return File(vfs.binDir, name)
+    }
+
+    /** True if [name] is available to execute, via provider or legacy binDir. */
+    fun hasBundledBinary(name: String): Boolean {
+        val provider = config.bootstrapProvider
+        return if (provider != null) provider.hasBinary(name) else File(vfs.binDir, name).exists()
+    }
+
     // ── Internals ──────────────────────────────────────────────────────────
 
     private fun runProcess(
@@ -198,19 +221,17 @@ class CommandExecutor(
     /**
      * Build and start a [Process] for the given shell command.
      *
-     * FIX: Added EACCES (error=13 / Permission denied) recovery.
-     * If ProcessBuilder throws IOException with error=13 it means the shell
-     * binary is not executable — either bootstrap was installed by an older
-     * build that didn't set permissions correctly, or makeExecutable() was
-     * skipped because bootstrap was already marked as installed.
-     *
-     * Recovery strategy (one-shot, no infinite retry):
-     *   1. chmodExecutable(shellBin)  — fix the specific binary via Os.chmod()
-     *   2. makeExecutable(binDir)     — fix all binaries in PREFIX/bin
-     *   3. Retry ProcessBuilder once
-     *
-     * This makes the executor self-healing: even if the installation step
-     * didn't set permissions correctly, the first command call fixes it.
+     * Binary resolution order:
+     *   1. If [TermuxConfig.bootstrapProvider] is set, resolve [shell] through
+     *      it — these binaries live under `nativeLibraryDir`, extracted by
+     *      PackageManager at install time, and are always executable. No
+     *      chmod recovery is needed or meaningful for this path.
+     *   2. Otherwise, fall back to the legacy `vfs.binDir` (filesDir) lookup.
+     *      This only works on Android 9 (API 28) and below — on API 29+,
+     *      Android refuses to exec a file this app wrote into its own
+     *      private storage, regardless of permission bits, and the
+     *      chmod-and-retry below cannot fix that (it fixes a *different*,
+     *      much rarer case: bits genuinely not set by an older install).
      */
     private fun buildProcess(
         command: String,
@@ -218,23 +239,37 @@ class CommandExecutor(
         extraEnv: Map<String, String>,
         shell: String,
     ): Process {
+        val provider = config.bootstrapProvider
+        val env = vfs.buildEnv(extraEnv)
+
+        if (provider != null) {
+            if (!provider.hasBinary(shell)) {
+                throw IOException(
+                    "Binary '$shell' not bundled by the configured BootstrapProvider. " +
+                    "Check your bootstrap-<abi> dependency matches this device's ABI."
+                )
+            }
+            val shellBin = provider.binaryPath(shell).absolutePath
+            return startProcess(shellBin, command, workDir, env)
+        }
+
         val shellBin = File(vfs.binDir, shell).let {
             if (it.exists()) it.absolutePath else "/system/bin/sh"
         }
-        val env = vfs.buildEnv(extraEnv)
 
         return try {
             startProcess(shellBin, command, workDir, env)
         } catch (e: IOException) {
             if (e.isPermissionDenied()) {
                 TermuxLogger.w(
-                    "Permission denied launching $shellBin — " +
-                    "auto-fixing execute permissions and retrying once"
+                    "Permission denied launching $shellBin — this is expected on " +
+                    "Android 10+ (API 29+) for binaries downloaded into app-private " +
+                    "storage; chmod cannot fix it. Configure TermuxConfig.bootstrapProvider " +
+                    "with a bootstrap-<abi> artifact instead. Attempting one chmod retry " +
+                    "in case bits were simply never set (older-install edge case)."
                 )
-                // Fix the shell binary specifically, then the entire bin dir
                 chmodExecutable(File(shellBin))
                 makeExecutable(vfs.binDir)
-                // One retry — if it fails again, propagate the original exception
                 try {
                     startProcess(shellBin, command, workDir, env)
                 } catch (retryEx: IOException) {

@@ -59,12 +59,41 @@ class LibTermux private constructor(
     /**
      * Install the Termux bootstrap environment.
      * Must be collected before calling any [bridge] methods.
+     *
+     * When [TermuxConfig.bootstrapProvider] is set, this does NOT download
+     * anything — binaries already shipped inside the APK (via a
+     * `bootstrap-<abi>` dependency) at install time. This just emits a
+     * quick verification flow instead of the legacy network-download flow.
      */
-    fun install(forceReinstall: Boolean = false): Flow<com.libtermux.bootstrap.InstallState> =
-        installer.install(forceReinstall)
+    fun install(forceReinstall: Boolean = false): Flow<com.libtermux.bootstrap.InstallState> {
+        val provider = config.bootstrapProvider
+        if (provider != null) {
+            return kotlinx.coroutines.flow.flow {
+                emit(com.libtermux.bootstrap.InstallState.Checking)
+                if (provider.isAvailable()) {
+                    emit(com.libtermux.bootstrap.InstallState.Completed)
+                } else {
+                    emit(
+                        com.libtermux.bootstrap.InstallState.Failed(
+                            "No bootstrap binaries found under nativeLibraryDir. " +
+                            "Add a bootstrap-<abi> dependency matching this device's ABI " +
+                            "(e.g. implementation(\"com.libtermux:bootstrap-arm64:...\"))."
+                        )
+                    )
+                }
+            }
+        }
+        return installer.install(forceReinstall)
+    }
 
-    /** Returns true if the Termux bootstrap is already installed */
-    val isInstalled: Boolean get() = vfs.isBootstrapInstalled
+    /**
+     * Returns true if the Termux bootstrap is ready to use.
+     * With a [TermuxConfig.bootstrapProvider] configured, this is an
+     * on-disk check (binaries bundled in the APK) rather than the legacy
+     * filesDir marker-file check.
+     */
+    val isInstalled: Boolean
+        get() = config.bootstrapProvider?.isAvailable() ?: vfs.isBootstrapInstalled
 
     /** Whether the device is rooted (su available and functional) */
     val isRooted: Boolean get() = RootUtils.isRooted

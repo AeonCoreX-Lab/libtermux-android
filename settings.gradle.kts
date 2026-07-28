@@ -3,6 +3,7 @@
  * Copyright (c) 2026 AeonCoreX-Lab / cybernahid-dev.
  */
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google()
         mavenCentral()
@@ -33,6 +34,16 @@ include(":terminal-view")
 
 // Optional: Shizuku elevated execution module
 include(":shizuku")
+
+// Per-ABI bootstrap artifacts — bundle Termux bootstrap binaries (bash,
+// apt, dpkg, busybox, proot, tar) as jniLibs/<abi>/lib*.so so Android's
+// installer extracts them with execute permission intact (required on
+// API 29+; see core/bootstrap/BootstrapProvider.kt). Consumers add only
+// the ABI(s) their app targets, keeping :core itself lightweight.
+include(":bootstrap-arm64")
+include(":bootstrap-arm")
+include(":bootstrap-x86_64")
+include(":bootstrap-x86")
 
 // Demo application
 include(":sample")

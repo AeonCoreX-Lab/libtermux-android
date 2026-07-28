@@ -20,6 +20,19 @@ data class TermuxConfig(
     val notificationChannelName: String           = "LibTermux Service",
     val notificationTitle: String                 = "LibTermux Running",
     val enableLogging: Boolean                    = true,
+    /**
+     * Resolves bootstrap binaries (bash, apt, proot, ...) from install-time
+     * executable storage instead of downloading them into app-private
+     * storage at runtime.
+     *
+     * On Android 10+ (API 29+), a file this app writes into its own
+     * `filesDir` can never be executed afterwards — see
+     * [com.libtermux.bootstrap.BootstrapProvider] for why. Leaving this
+     * null preserves the legacy runtime-download behavior, which will fail
+     * with a permission-denied error on API 29+ devices. Set this (via a
+     * `bootstrap-<abi>` artifact) to fix that.
+     */
+    val bootstrapProvider: com.libtermux.bootstrap.BootstrapProvider? = null,
 ) {
     companion object {
         const val LATEST_BOOTSTRAP = "LATEST"
@@ -56,6 +69,8 @@ data class TermuxConfig(
         fun logLevel(v: LogLevel)               = apply { cfg = cfg.copy(logLevel = v)               }
         fun maxCommandTimeoutMs(v: Long)        = apply { cfg = cfg.copy(maxCommandTimeoutMs = v)    }
         fun customBootstrapUrl(v: String)       = apply { cfg = cfg.copy(customBootstrapUrl = v)     }
+        fun bootstrapProvider(v: com.libtermux.bootstrap.BootstrapProvider) =
+            apply { cfg = cfg.copy(bootstrapProvider = v) }
         fun addEnv(key: String, value: String)  = apply {
             cfg = cfg.copy(environmentVariables = cfg.environmentVariables + (key to value))
         }
@@ -76,6 +91,7 @@ class TermuxConfigDsl {
     var logLevel: LogLevel                  = LogLevel.INFO
     var maxCommandTimeoutMs: Long           = 30_000L
     var customBootstrapUrl: String?         = null
+    var bootstrapProvider: com.libtermux.bootstrap.BootstrapProvider? = null
     var enablePackageManager: Boolean       = true
     var backgroundExecutionEnabled: Boolean = true
 
@@ -90,6 +106,7 @@ class TermuxConfigDsl {
         maxCommandTimeoutMs        = maxCommandTimeoutMs,
         environmentVariables       = envVars.toMap(),
         customBootstrapUrl         = customBootstrapUrl,
+        bootstrapProvider          = bootstrapProvider,
         enablePackageManager       = enablePackageManager,
         backgroundExecutionEnabled = backgroundExecutionEnabled,
     )

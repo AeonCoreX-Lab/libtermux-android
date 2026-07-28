@@ -99,7 +99,7 @@ internal class ProotRunner(
         withContext(Dispatchers.IO) { executor.execute(buildProotCommand(distro, command, workDir)) }
 
     fun login(distro: Distro): Process =
-        ProcessBuilder(vfs.binDir.absolutePath + "/bash", "-c", buildProotCommand(distro, null, "/root"))
+        ProcessBuilder(executor.resolveBinary("bash").absolutePath, "-c", buildProotCommand(distro, null, "/root"))
             .directory(vfs.homeDir)
             .also { pb -> pb.environment().clear(); pb.environment().putAll(vfs.buildEnv()) }
             .redirectErrorStream(false)
@@ -112,15 +112,31 @@ internal class ProotRunner(
 
     // ── Internals ─────────────────────────────────────────────────────────
 
-    private suspend fun ensureProot() {
-        if (File(vfs.binDir, "proot").exists()) return
-        val result = executor.execute("pkg install -y proot")
-        if (result.isFailure) throw IllegalStateException("Failed to install proot: ${result.stderr}")
+    /**
+     * Verify `proot` is available.
+     *
+     * `proot` ships inside the Termux bootstrap archive itself (see
+     * termux-packages/scripts/build-bootstraps.sh — it's included whenever
+     * BOOTSTRAP_ANDROID10_COMPATIBLE is set), not as a separately
+     * `pkg install`-able package. The previous implementation called
+     * `pkg install -y proot`, which is both unnecessary (proot is already
+     * present after bootstrap install) and broken on API 29+ (apt writes
+     * downloaded packages into app-private storage, which can never be
+     * exec'd — the same restriction this whole provider system works
+     * around for bash/apt/dpkg).
+     */
+    private fun ensureProot() {
+        if (!executor.hasBundledBinary("proot")) {
+            throw IllegalStateException(
+                "proot binary not found. Make sure the Termux bootstrap " +
+                "(or a bootstrap-<abi> artifact) is installed before setting up a distro."
+            )
+        }
     }
 
     private fun buildProotCommand(distro: Distro, command: String?, workDir: String): String {
         val rootfs = rootfsDir(distro).absolutePath
-        val proot  = File(vfs.binDir, "proot").absolutePath
+        val proot  = executor.resolveBinary("proot").absolutePath
         val env    = "/usr/bin/env -i HOME=/root TERM=xterm-256color LANG=C.UTF-8 " +
                      "ANDROID_ROOT=/system " +
                      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
@@ -202,7 +218,7 @@ internal class ProotRunner(
             else -> "xf"
         }
         val result = executor.execute(
-            "${File(vfs.binDir, "tar").absolutePath} $flag " +
+            "${executor.resolveBinary("tar").absolutePath} $flag " +
             "${shellQuote(tarFile.absolutePath)} -C ${shellQuote(destDir.absolutePath)}"
         )
         check(result.isSuccess) { "Extraction failed: ${result.stderr}" }

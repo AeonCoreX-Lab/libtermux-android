@@ -38,7 +38,11 @@ import java.io.File
  */
 class VirtualFileSystem(context: Context, private val config: TermuxConfig) {
 
-    private val root: File = File(context.filesDir, "libtermux").also { it.mkdirs() }
+    /** Root of the entire virtual filesystem: filesDir/libtermux */
+    val root: File = File(context.filesDir, "libtermux").also { it.mkdirs() }
+
+    /** The app's private files directory (context.filesDir) — for locating sibling storage like distros/ */
+    val filesDir: File = context.filesDir
 
     val prefixDir: File   = File(root, "usr").also       { it.mkdirs() }
     val homeDir: File     = File(root, "home").also      { it.mkdirs() }

@@ -78,6 +78,7 @@ class BootstrapFetchPlugin : Plugin<Project> {
             bootstrapTag.set(ext.bootstrapTag)
             binaries.set(ext.binaries)
             outputDir.set(project.layout.projectDirectory.dir("src/main/jniLibs"))
+            gradleUserHomeDir.set(project.gradle.gradleUserHomeDir)
         }
 
         project.tasks.register<FetchProotBinaryTask>("fetchProotBinary") {
@@ -92,6 +93,7 @@ class BootstrapFetchPlugin : Plugin<Project> {
             abi.set(ext.abi)
             prootArch.set(ext.prootArch)
             outputDir.set(project.layout.projectDirectory.dir("src/main/jniLibs"))
+            gradleUserHomeDir.set(project.gradle.gradleUserHomeDir)
             onlyIf { ext.includeProot.getOrElse(false) }
         }
 
@@ -162,6 +164,20 @@ abstract class FetchBootstrapBinariesTask : DefaultTask() {
     @get:Input abstract val binaries: org.gradle.api.provider.SetProperty<String>
     @get:OutputDirectory abstract val outputDir: DirectoryProperty
 
+    /**
+     * Gradle user home directory, captured at configuration time via
+     * `project.gradle.gradleUserHomeDir` in [BootstrapFetchPlugin.apply].
+     * Not annotated `@Internal`/`@Input` on purpose beyond marking it
+     * `@Internal` below — its value doesn't affect task outputs (it's just
+     * a shared download cache location), so it shouldn't participate in
+     * up-to-date checks. Reading `project` directly inside [fetch] (an
+     * execution-time `@TaskAction`) is what breaks the configuration
+     * cache — see https://docs.gradle.org/9.6.1/userguide/configuration_cache_requirements.html#config_cache:requirements:use_project_during_execution
+     * — so the value is threaded in here instead.
+     */
+    @get:org.gradle.api.tasks.Internal
+    abstract val gradleUserHomeDir: DirectoryProperty
+
     @TaskAction
     fun fetch() {
         val abiName = abi.get()
@@ -170,7 +186,7 @@ abstract class FetchBootstrapBinariesTask : DefaultTask() {
         val wanted = binaries.get()
         val destDir = outputDir.get().dir(abiName).asFile.also { it.mkdirs() }
 
-        val cacheDir = File(project.gradle.gradleUserHomeDir, "libtermux-bootstrap-cache")
+        val cacheDir = File(gradleUserHomeDir.get().asFile, "libtermux-bootstrap-cache")
         cacheDir.mkdirs()
         val cachedZip = File(cacheDir, "bootstrap-$arch-$tag.zip")
 
@@ -369,6 +385,14 @@ abstract class FetchProotBinaryTask : DefaultTask() {
     @get:Input abstract val prootArch: Property<String>
     @get:OutputDirectory abstract val outputDir: DirectoryProperty
 
+    /**
+     * Gradle user home directory, captured at configuration time — see the
+     * matching property on [FetchBootstrapBinariesTask] for why `project`
+     * can't be read directly inside [fetch] under the configuration cache.
+     */
+    @get:org.gradle.api.tasks.Internal
+    abstract val gradleUserHomeDir: DirectoryProperty
+
     // Injected rather than using the deprecated Project.exec { } — required
     // for configuration-cache compatibility under Gradle 8+/9+, since a
     // @TaskAction should not reach back into `project` at execution time.
@@ -381,7 +405,7 @@ abstract class FetchProotBinaryTask : DefaultTask() {
         val arch = prootArch.get()
         val destDir = outputDir.get().dir(abiName).asFile.also { it.mkdirs() }
 
-        val cacheDir = File(project.gradle.gradleUserHomeDir, "libtermux-bootstrap-cache")
+        val cacheDir = File(gradleUserHomeDir.get().asFile, "libtermux-bootstrap-cache")
         cacheDir.mkdirs()
 
         val debFile = resolveAndDownloadDeb(arch, cacheDir)

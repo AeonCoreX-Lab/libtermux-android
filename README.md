@@ -24,7 +24,7 @@ Linux terminal without ever knowing it exists.
 ```
 Your App → LibTermux SDK → Isolated Linux Env → bash, python, node, ruby, pkg install...
 ```
-> **⚠️ Note:This project is currently in an experimental stage, may contain bugs, and is not usable in production at the moment. However, we are actively working on it to make it production-ready.**
+> **Note:This project is currently in an experimental stage, may contain bugs, and is not usable in production at the moment. However, we are actively working on it to make it production-ready.**
 
 ## ✨ Features
 

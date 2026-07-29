@@ -127,6 +127,13 @@ class BootstrapFetchPlugin : Plugin<Project> {
         project.tasks.whenTaskAdded {
             if (name.endsWith("JniLibFolders")) {
                 dependsOn("fetchBootstrapBinaries")
+                // The finalizedBy declared above only orders fetchProotBinary
+                // *after* fetchBootstrapBinaries — it does not create a
+                // dependency edge, so Gradle's task-output validation still
+                // flags fetchProotBinary's write into the same jniLibs
+                // directory as undeclared. Depend on it explicitly too.
+                // as undeclared. Depend on it explicitly too.
+                dependsOn("fetchProotBinary")
             }
         }
     }

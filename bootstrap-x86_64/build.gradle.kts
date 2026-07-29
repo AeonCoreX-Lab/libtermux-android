@@ -19,7 +19,9 @@ bootstrapFetch {
     abi.set("x86_64")
     termuxArch.set("x86_64")
     bootstrapTag.set("bootstrap-2026.05.24-r1+apt.android-7")
-    binaries.set(setOf("bash", "apt", "dpkg", "busybox", "proot", "tar"))
+    binaries.set(setOf("bash", "apt", "dpkg", "tar"))
+    includeProot.set(true)
+    prootArch.set("x86_64")
 }
 
 mavenPublishing {

@@ -115,21 +115,34 @@ internal class ProotRunner(
     /**
      * Verify `proot` is available.
      *
-     * `proot` ships inside the Termux bootstrap archive itself (see
-     * termux-packages/scripts/build-bootstraps.sh — it's included whenever
-     * BOOTSTRAP_ANDROID10_COMPATIBLE is set), not as a separately
-     * `pkg install`-able package. The previous implementation called
-     * `pkg install -y proot`, which is both unnecessary (proot is already
-     * present after bootstrap install) and broken on API 29+ (apt writes
-     * downloaded packages into app-private storage, which can never be
-     * exec'd — the same restriction this whole provider system works
-     * around for bash/apt/dpkg).
+     * `proot` is genuinely NOT part of the Termux bootstrap archive —
+     * verified directly by inspecting a real bootstrap-aarch64.zip (no
+     * proot binary, no SYMLINKS.txt entry for one), and independently
+     * confirmed by termux/proot-distro's own README, which describes
+     * `pkg install proot-distro` as pulling in `proot` as a *separate* apt
+     * package dependency. (An earlier version of this comment claimed
+     * proot ships in the bootstrap archive based on a build-script read
+     * that didn't hold up against the actual archive contents — corrected
+     * after checking.)
+     *
+     * The previous implementation called `pkg install -y proot` at
+     * runtime, which is broken on API 29+ for the same reason bash/apt/dpkg
+     * needed BootstrapProvider: apt writes downloaded packages into
+     * app-private storage, which can never be exec'd afterwards.
+     *
+     * The fix here: a `bootstrap-<abi>` module's `fetchProotBinary` Gradle
+     * task (build-logic) downloads a standalone static proot binary at
+     * *build* time from a third-party source (see FetchProotBinaryTask's
+     * KDoc for that source and its tradeoffs) and places it alongside
+     * bash/apt/dpkg/tar under the same nativeLibraryDir — so it resolves
+     * through the exact same [executor].resolveBinary("proot") path.
      */
     private fun ensureProot() {
         if (!executor.hasBundledBinary("proot")) {
             throw IllegalStateException(
-                "proot binary not found. Make sure the Termux bootstrap " +
-                "(or a bootstrap-<abi> artifact) is installed before setting up a distro."
+                "proot binary not found. Make sure your bootstrap-<abi> dependency has " +
+                "bootstrapFetch.includeProot = true (the default in the published modules) " +
+                "before setting up a distro."
             )
         }
     }

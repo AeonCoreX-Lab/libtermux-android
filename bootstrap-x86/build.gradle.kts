@@ -19,7 +19,11 @@ bootstrapFetch {
     abi.set("x86")
     termuxArch.set("i686")
     bootstrapTag.set("bootstrap-2026.05.24-r1+apt.android-7")
-    binaries.set(setOf("bash", "apt", "dpkg", "busybox", "proot", "tar"))
+    binaries.set(setOf("bash", "apt", "dpkg", "tar"))
+    includeProot.set(true)
+    // Termux's official proot .deb uses "i686" (matches termuxArch above),
+    // not the Android ABI name "x86".
+    prootArch.set("i686")
 }
 
 mavenPublishing {

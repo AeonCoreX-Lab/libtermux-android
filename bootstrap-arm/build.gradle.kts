@@ -18,7 +18,14 @@ bootstrapFetch {
     abi.set("armeabi-v7a")
     termuxArch.set("arm")
     bootstrapTag.set("bootstrap-2026.05.24-r1+apt.android-7")
-    binaries.set(setOf("bash", "apt", "dpkg", "busybox", "proot", "tar"))
+    // busybox and proot are NOT in the Termux bootstrap archive — verified
+    // directly against a real bootstrap-aarch64.zip. Do not add them here.
+    binaries.set(setOf("bash", "apt", "dpkg", "tar"))
+    includeProot.set(true)
+    // Termux's official proot .deb uses "arm" (matches termuxArch above) —
+    // note this module previously used "armv7" for a since-removed
+    // third-party binary source with different naming; corrected here.
+    prootArch.set("arm")
 }
 
 mavenPublishing {

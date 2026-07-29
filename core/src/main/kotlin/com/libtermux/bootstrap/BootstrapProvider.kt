@@ -9,8 +9,9 @@ import java.io.File
 
 /**
  * Resolves executable binaries that ship in the Termux bootstrap archive
- * (bash, apt, dpkg, busybox, proot, tar, ...) to a location the OS will
- * actually allow this process to `exec()`.
+ * (bash, apt, dpkg, tar from the Termux bootstrap archive; proot from a
+ * separate source — see build-logic's FetchProotBinaryTask) to a location
+ * the OS will actually allow this process to `exec()`.
  *
  * ## Why this exists
  * Since Android 10 (API 29), a file the app itself *wrote* into its own
@@ -25,8 +26,9 @@ import java.io.File
  * bundled by a `bootstrap-<abi>` Maven artifact as renamed `.so` files).
  *
  * This interface is deliberately not Termux-specific in naming: both
- * `:core` (bash, apt, dpkg, busybox) and `:os` (proot, tar — also shipped
- * inside the same bootstrap archive) resolve binaries through the same
+ * `:core` (bash, apt, dpkg — real files in the bootstrap archive) and
+ * `:os` (tar — also from the bootstrap archive; proot — fetched
+ * separately, see FetchProotBinaryTask) resolve binaries through the same
  * provider, so there is exactly one place that understands "how do I find
  * an executable binary" in this whole project.
  */

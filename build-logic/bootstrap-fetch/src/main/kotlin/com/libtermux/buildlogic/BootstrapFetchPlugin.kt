@@ -102,6 +102,33 @@ class BootstrapFetchPlugin : Plugin<Project> {
         project.tasks.named("fetchBootstrapBinaries") {
             finalizedBy("fetchProotBinary")
         }
+
+        // AGP's *JniLibFolders merge tasks (mergeDebugJniLibFolders,
+        // mergeReleaseJniLibFolders, and one per build-type/flavor variant)
+        // read src/main/jniLibs as a source-set input, but Gradle only
+        // infers task dependencies from declared task *outputs* — a
+        // source-set directory isn't one, so there's no automatic edge to
+        // whatever writes into it. Under Gradle 9's stricter validation
+        // that surfaces as "Property has implicit dependency" on every
+        // variant's merge task.
+        //
+        // `finalizedBy` above only orders our two fetch tasks relative to
+        // each other; it does nothing for AGP's tasks, which may still run
+        // concurrently with — or before — fetchBootstrapBinaries.
+        //
+        // AGP creates its per-variant merge tasks lazily and doesn't expose
+        // their names up front, so `tasks.named(...)` can't target them
+        // directly at plugin-apply time. `tasks.whenTaskAdded` is the
+        // standard way around that (the same pattern used by e.g.
+        // mozilla/rust-android-gradle for this exact class of problem):
+        // it fires for every task as AGP registers it, letting us match by
+        // name and attach a real dependsOn edge to each variant as it
+        // appears.
+        project.tasks.whenTaskAdded {
+            if (name.endsWith("JniLibFolders")) {
+                dependsOn("fetchBootstrapBinaries")
+            }
+        }
     }
 }
 
